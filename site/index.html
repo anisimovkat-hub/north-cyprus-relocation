@@ -10,6 +10,7 @@
   <link rel="canonical" href="https://north-cyprus-relocation-20260727-k7m4.website.yandexcloud.net/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
   <link rel="manifest" href="/site.webmanifest">
+  <script src="/assets/js/metrika.js"></script>
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ru_RU">
   <meta property="og:site_name" content="Запасной аэродром">
@@ -1694,6 +1695,7 @@
   </style>
 </head>
 <body>
+  <noscript><div><img src="https://mc.yandex.ru/watch/111319878" style="position:absolute;left:-9999px" alt=""></div></noscript>
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="#top" aria-label="Запасной аэродром, на главную">
@@ -2125,6 +2127,17 @@
     });
 
     const leadEndpoint = 'https://script.google.com/macros/s/AKfycbwWgu7A8XVuX9UDfg1ZSYACqjkrHhPSq1aob7UQ6x6M0Tqp6HNzVf3yjAnzZ7Robvpy/exec';
+    const metrikaId = 111319878;
+    const leadSourceCodes = {
+      'Квиз': 'quiz',
+      'Лендинг: нижняя форма': 'contact_form',
+      'Лендинг: всплывающая форма': 'modal_form'
+    };
+
+    function reachMetrikaGoal(goal, params = {}) {
+      if (typeof window.ym !== 'function') return;
+      window.ym(metrikaId, 'reachGoal', goal, params);
+    }
 
     function buildLeadPayload(form, source) {
       const values = Object.fromEntries(new FormData(form).entries());
@@ -2159,6 +2172,9 @@
           body: JSON.stringify(buildLeadPayload(form, source)),
           keepalive: true
         });
+        reachMetrikaGoal('lead_form_sent', {
+          form_source: leadSourceCodes[source] || 'other'
+        });
         form.reset();
         if (success) {
           success.textContent = 'Заявка отправлена. Скоро свяжемся с вами в выбранном мессенджере.';
@@ -2192,6 +2208,8 @@
       const answers = {};
       let current = 0;
       let advanceTimer;
+      let quizStartedTracked = false;
+      let quizCompletedTracked = false;
 
       const quizBranches = {
         'Нужно переехать в ближайшее время': [
@@ -2255,6 +2273,10 @@
           next.disabled = !group?.querySelector('.selected');
         } else {
           buildQuizSummary();
+          if (!quizCompletedTracked) {
+            reachMetrikaGoal('quiz_completed');
+            quizCompletedTracked = true;
+          }
         }
       }
 
@@ -2281,6 +2303,10 @@
         if (key === 'scenario') {
           delete answers.profile;
           delete answers.priorities;
+          if (!quizStartedTracked) {
+            reachMetrikaGoal('quiz_started');
+            quizStartedTracked = true;
+          }
         }
         next.disabled = false;
         clearTimeout(advanceTimer);
@@ -2313,6 +2339,15 @@
 
     document.querySelector('[data-contact-form]')?.addEventListener('submit', (event) => {
       sendLeadForm(event, 'Лендинг: нижняя форма');
+    });
+
+    document.addEventListener('click', (event) => {
+      const link = event.target.closest('a[href]');
+      if (!link) return;
+      const href = link.getAttribute('href') || '';
+      if (href.includes('wa.me/')) reachMetrikaGoal('whatsapp_click');
+      if (href.includes('t.me/')) reachMetrikaGoal('telegram_click');
+      if (href.includes('instagram.com/')) reachMetrikaGoal('instagram_click');
     });
 
     const reviewsTrack = document.querySelector('[data-reviews-track]');
@@ -2399,6 +2434,7 @@
 
       function openLeadModal(trigger) {
         leadModalOpener = trigger;
+        reachMetrikaGoal('consultation_modal_open');
         leadModal.hidden = false;
         document.body.classList.add('modal-open');
         pageRegions.forEach(region => { region.inert = true; });
