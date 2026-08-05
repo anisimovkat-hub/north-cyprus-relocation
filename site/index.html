@@ -154,11 +154,12 @@
       position: sticky;
       top: 0;
       z-index: 20;
+      isolation: isolate;
       background: var(--white);
       border-bottom: 1px solid var(--line);
     }
     .header-inner { height: 76px; display: flex; align-items: center; gap: 28px; }
-    .brand { display: flex; align-items: center; min-width: 180px; }
+    .brand { position: relative; z-index: 3; display: flex; align-items: center; min-width: 180px; }
     .brand-logo { display: block; width: 178px; height: 54px; object-fit: contain; object-position: left center; }
     .nav { display: flex; align-items: center; gap: clamp(16px, 2vw, 30px); margin-left: auto; font-size: 13px; font-weight: 700; }
     .nav a { position: relative; padding-bottom: 3px; }
@@ -184,6 +185,8 @@
     .header-cta { min-height: 44px; padding: 11px 20px; }
     .menu-toggle {
       display: none;
+      position: relative;
+      z-index: 3;
       width: 46px;
       min-width: 46px;
       height: 46px;
@@ -214,6 +217,7 @@
     .menu-open .menu-icon-line:nth-child(1) { transform: translateY(7px) rotate(45deg); }
     .menu-open .menu-icon-line:nth-child(2) { opacity: 0; }
     .menu-open .menu-icon-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .menu-open .menu-toggle { background: var(--black); border-color: var(--black); color: var(--milk); }
 
     /* HERO */
     .hero { padding: clamp(40px, 5vw, 72px) 0; overflow: hidden; }
@@ -506,9 +510,12 @@
       .nav {
         display: none;
         position: fixed;
-        inset: 68px 0 auto 0;
-        min-height: calc(100dvh - 68px);
-        padding: 34px var(--pad);
+        z-index: 2;
+        inset: 0;
+        min-height: 100dvh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: calc(68px + 34px) var(--pad) 34px;
         background: var(--milk);
         flex-direction: column;
         align-items: flex-start;
