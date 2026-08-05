@@ -1,0 +1,17 @@
+{
+  "name": "Запасной аэродром — релокация на Северный Кипр",
+  "short_name": "Запасной аэродром",
+  "lang": "ru",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#F6F6EF",
+  "theme_color": "#F6F6EF",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
