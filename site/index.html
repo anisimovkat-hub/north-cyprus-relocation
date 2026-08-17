@@ -2236,6 +2236,12 @@
       'Лендинг: нижняя форма': 'contact_form',
       'Лендинг: всплывающая форма': 'modal_form'
     };
+    const formGoalCodes = {
+      'Квиз': 'quiz_form_sent',
+      'Лендинг: экстренная форма': 'urgent_form_sent',
+      'Лендинг: нижняя форма': 'contact_form_sent',
+      'Лендинг: всплывающая форма': 'modal_form_sent'
+    };
 
     function reachMetrikaGoal(goal, params = {}) {
       if (typeof window.ym !== 'function') return;
@@ -2280,11 +2286,12 @@
           body: JSON.stringify(buildLeadPayload(form, source)),
           keepalive: true
         });
-        reachMetrikaGoal('lead_form_sent', {
-          form_source: leadSourceCodes[source] || 'other'
-        });
-        if (source === 'Лендинг: экстренная форма') {
-          reachMetrikaGoal('urgent_lead_sent');
+        const formSource = leadSourceCodes[source] || 'other';
+        const goalParams = { form_source: formSource };
+        reachMetrikaGoal('lead_form_sent', goalParams);
+        reachMetrikaGoal('any_form_sent', goalParams);
+        if (formGoalCodes[source]) {
+          reachMetrikaGoal(formGoalCodes[source], goalParams);
         }
         form.reset();
         if (success) {
