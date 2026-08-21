@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Manrope';
-  src: url('../assets/fonts/manrope/Manrope-Variable.ttf') format('truetype-variations');
+  src: url('../assets/fonts/manrope/Manrope-Variable.woff2') format('woff2');
   font-weight: 200 800;
   font-style: normal;
   font-display: swap;
@@ -86,6 +86,8 @@ p { margin: 0 0 16px; }
 .lead { max-width: 780px; color: var(--muted); font-size: 19px; }
 .meta { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 0; color: var(--muted); font-size: 14px; }
 .chip { border: 1px solid var(--ink); border-radius: 999px; padding: 7px 11px; background: var(--blue-soft); }
+.article-hero { width: 100%; max-height: 430px; margin: 30px 0 4px; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--blue-soft); box-shadow: 0 22px 44px rgba(13, 13, 13, .10); }
+.article-hero img { display: block; width: 100%; height: 100%; max-height: 430px; object-fit: cover; }
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 28px; }
 .card, .toc, .note, .cta, .faq-item {
   background: var(--paper);
@@ -98,8 +100,23 @@ p { margin: 0 0 16px; }
 .card:nth-child(3n) { background: var(--blue); }
 .card h2, .card h3 { margin-top: 0; }
 .card p { color: var(--muted); }
+.card-image { display: block; width: 100%; height: 164px; margin: -20px -20px 20px; width: calc(100% + 40px); border-radius: 9px 9px 0 0; overflow: hidden; background: var(--blue-soft); }
+.card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .article { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 36px; align-items: start; margin-top: 38px; }
 .article-body { min-width: 0; }
+.article-body > h2:first-child { margin-top: 0; }
+.article-body h2 { scroll-margin-top: 96px; }
+.article-body h3 { scroll-margin-top: 96px; }
+.article-body strong { font-weight: 800; }
+.article-body a { color: var(--red); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.article-body a:hover { color: var(--ink); }
+.data-table-wrap { margin: 26px 0 34px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: 0 15px 32px rgba(13,13,13,.08); }
+.data-table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 14px; line-height: 1.45; }
+.data-table th, .data-table td { padding: 13px 14px; text-align: left; vertical-align: top; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.data-table th { background: var(--blue-soft); font-weight: 800; }
+.data-table tr:last-child td { border-bottom: 0; }
+.data-table th:last-child, .data-table td:last-child { border-right: 0; }
+.source-note { margin: 28px 0 0; padding: 16px 18px; border-left: 3px solid var(--red); background: rgba(164,225,243,.34); color: var(--muted); font-size: 14px; }
 .toc { position: sticky; top: 92px; }
 .toc strong { display: block; margin-bottom: 10px; }
 .toc a { display: block; padding: 7px 0; color: var(--muted); font-size: 14px; }
@@ -127,5 +144,10 @@ footer { border-top: 1px solid var(--line); padding: 28px 24px 60px; color: var(
   .brand img { width: 122px; height: 50px; }
   .nav > .btn { min-height: 42px; padding: 0 13px; font-size: 12px; }
   main { padding: 38px 18px 64px; }
+  .article-hero { margin-top: 24px; border-radius: 13px; max-height: 250px; }
+  .article-hero img { max-height: 250px; }
+  .data-table { font-size: 13px; }
+  .data-table th, .data-table td { padding: 11px 12px; }
+  .card-image { height: 150px; }
   .cta-links { align-items: stretch; flex-direction: column; }
 }
