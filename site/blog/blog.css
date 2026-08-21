@@ -86,8 +86,8 @@ p { margin: 0 0 16px; }
 .lead { max-width: 780px; color: var(--muted); font-size: 19px; }
 .meta { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 0; color: var(--muted); font-size: 14px; }
 .chip { border: 1px solid var(--ink); border-radius: 999px; padding: 7px 11px; background: var(--blue-soft); }
-.article-hero { width: 100%; max-height: 430px; margin: 30px 0 4px; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--blue-soft); box-shadow: 0 22px 44px rgba(13, 13, 13, .10); }
-.article-hero img { display: block; width: 100%; height: 100%; max-height: 430px; object-fit: cover; }
+.article-hero { width: 100%; height: 280px; margin: 30px 0 4px; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--blue-soft); box-shadow: 0 22px 44px rgba(13, 13, 13, .10); }
+.article-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 28px; }
 .card, .toc, .note, .cta, .faq-item {
   background: var(--paper);
@@ -103,7 +103,7 @@ p { margin: 0 0 16px; }
 .card-image { display: block; width: 100%; height: 164px; margin: -20px -20px 20px; width: calc(100% + 40px); border-radius: 9px 9px 0 0; overflow: hidden; background: var(--blue-soft); }
 .card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .article { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 36px; align-items: start; margin-top: 38px; }
-.article-body { min-width: 0; }
+.article-body { min-width: 0; width: 100%; }
 .article-body > h2:first-child { margin-top: 0; }
 .article-body h2 { scroll-margin-top: 96px; }
 .article-body h3 { scroll-margin-top: 96px; }
@@ -115,7 +115,7 @@ p { margin: 0 0 16px; }
   background: var(--blue-soft);
   box-shadow: 0 18px 36px rgba(13, 13, 13, .10);
 }
-.article-photo img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.article-photo img { display: block; width: 100%; height: 240px; object-fit: cover; }
 .article-photo figcaption { padding: 10px 14px; color: var(--muted); font-size: 13px; line-height: 1.45; }
 .document-checklist {
   margin: 38px 0;
@@ -160,7 +160,8 @@ p { margin: 0 0 16px; }
 .article-body strong { font-weight: 800; }
 .article-body a { color: var(--red); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .article-body a:hover { color: var(--ink); }
-.data-table-wrap { margin: 26px 0 34px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: 0 15px 32px rgba(13,13,13,.08); }
+.data-table-wrap { position: relative; width: 100%; max-width: 100%; margin: 26px 0 34px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: 0 15px 32px rgba(13,13,13,.08); }
+.table-scroll-hint { display: none; }
 .data-table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 14px; line-height: 1.45; }
 .data-table th, .data-table td { padding: 13px 14px; text-align: left; vertical-align: top; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .data-table th { background: var(--blue-soft); font-weight: 800; }
@@ -168,6 +169,7 @@ p { margin: 0 0 16px; }
 .data-table th:last-child, .data-table td:last-child { border-right: 0; }
 .source-note { margin: 28px 0 0; padding: 16px 18px; border-left: 3px solid var(--red); background: rgba(164,225,243,.34); color: var(--muted); font-size: 14px; }
 .toc { position: sticky; top: 92px; }
+.toc-toggle { display: none; }
 .toc strong { display: block; margin-bottom: 10px; }
 .toc a { display: block; padding: 7px 0; color: var(--muted); font-size: 14px; }
 .toc a:hover { color: var(--red); }
@@ -176,10 +178,12 @@ li { margin-bottom: 8px; }
 .note { background: var(--blue-soft); color: var(--ink); }
 .cta { margin-top: 48px; background: var(--ink); color: #fff; }
 .cta p { color: rgba(255,255,255,.76); }
-.cta-links { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; margin-top: 22px; }
-.cta-links .btn { margin: 0; }
-.cta-link { color: var(--blue); font-size: 14px; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
-.cta-link:hover { color: #fff; }
+.cta-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 12px; margin-top: 22px; }
+.cta-links .btn, .cta-link { min-height: 46px; margin: 0; padding: 0 18px; border: 1px solid transparent; border-radius: 999px; font-size: 14px; font-weight: 800; text-decoration: none; }
+.cta .btn { background: #fff; border-color: #fff; color: var(--ink); box-shadow: none; }
+.cta .btn:hover { background: var(--blue); border-color: var(--blue); color: var(--ink); transform: none; }
+.cta .cta-link { display: inline-flex; align-items: center; justify-content: center; background: var(--blue); border-color: var(--blue); color: var(--ink); text-decoration: none; }
+.cta .cta-link:hover { background: #fff; border-color: #fff; color: var(--ink); }
 .faq { margin-top: 30px; display: grid; gap: 12px; }
 .faq-item summary { cursor: pointer; font-weight: 800; }
 .article-faq-entry { margin: 18px 0 0; padding: 17px 18px; border-left: 3px solid var(--red); border-radius: 0 12px 12px 0; background: rgba(164,225,243,.24); }
@@ -192,17 +196,19 @@ footer { border-top: 1px solid var(--line); padding: 28px 24px 60px; color: var(
 .footer-inner { max-width: var(--max); margin: 0 auto; font-size: 13px; }
 @media (max-width: 900px) {
   .nav-links { display: none; }
-  .grid, .article { grid-template-columns: 1fr; }
-  .toc { position: static; }
+  .grid { grid-template-columns: 1fr; }
+  .article { display: flex; flex-direction: column; gap: 24px; }
+  .article-body { order: 0; }
+  .toc { position: static; order: -1; width: 100%; }
 }
 @media (max-width: 560px) {
   .nav { padding: 0 16px; gap: 10px; }
   .brand img { width: 122px; height: 50px; }
   .nav > .btn { min-height: 42px; padding: 0 13px; font-size: 12px; }
   main { padding: 38px 18px 64px; }
-  .article-hero { margin-top: 24px; border-radius: 13px; max-height: 250px; }
-  .article-hero img { max-height: 250px; }
+  .article-hero { height: 210px; margin-top: 24px; border-radius: 13px; }
   .article-photo { margin: 24px 0 28px; border-radius: 13px; }
+  .article-photo img { height: 180px; }
   .document-checklist { margin: 30px 0; padding: 20px 16px; border-radius: 13px; }
   .checklist-grid, .article-form-grid, .article-messenger-fields { grid-template-columns: 1fr; }
   .article-lead { padding: 22px 18px; border-radius: 13px; }
@@ -211,8 +217,19 @@ footer { border-top: 1px solid var(--line); padding: 28px 24px 60px; color: var(
   .article-faq-question { font-size: 17px; }
   .article-faq-answer, .article-faq-answer-only { font-size: 15px; }
   .article-faq-answer-only { padding: 0 16px 15px; }
+  .data-table-wrap { padding-top: 39px; scroll-snap-type: x proximity; }
+  .table-scroll-hint { position: absolute; z-index: 1; top: 0; left: 0; right: 0; display: inline-flex; align-items: center; gap: 7px; min-height: 38px; margin: 0; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--blue-soft); color: var(--ink); font-size: 12px; font-weight: 800; line-height: 1.2; }
+  .table-scroll-hint > span:first-child { color: var(--red); font-size: 17px; }
   .data-table { font-size: 13px; }
   .data-table th, .data-table td { padding: 11px 12px; }
   .card-image { height: 150px; }
+  .toc { padding: 0; overflow: hidden; }
+  .toc-toggle { display: flex; width: 100%; min-height: 56px; align-items: center; justify-content: space-between; padding: 14px 16px; border: 0; background: var(--blue-soft); color: var(--ink); font: inherit; font-size: 16px; font-weight: 800; text-align: left; cursor: pointer; }
+  .toc-toggle-icon { display: grid; width: 24px; height: 24px; place-items: center; border: 1px solid var(--ink); border-radius: 50%; font-size: 19px; font-weight: 400; line-height: 1; }
+  .toc--collapsible > strong, .toc--collapsible:not(.is-open) > a { display: none; }
+  .toc--collapsible.is-open > strong { display: block; margin: 16px 16px 6px; }
+  .toc--collapsible.is-open > a { display: block; margin: 0 16px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.42; }
+  .toc--collapsible.is-open > a:last-child { margin-bottom: 8px; border-bottom: 0; }
   .cta-links { align-items: stretch; flex-direction: column; }
+  .cta-links .btn, .cta-link { width: 100%; }
 }
