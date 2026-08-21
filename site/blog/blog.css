@@ -182,6 +182,12 @@ li { margin-bottom: 8px; }
 .cta-link:hover { color: #fff; }
 .faq { margin-top: 30px; display: grid; gap: 12px; }
 .faq-item summary { cursor: pointer; font-weight: 800; }
+.article-faq-entry { margin: 18px 0 0; padding: 17px 18px; border-left: 3px solid var(--red); border-radius: 0 12px 12px 0; background: rgba(164,225,243,.24); }
+.article-faq-question { display: block; color: var(--ink); font-size: 18px; line-height: 1.35; }
+.article-faq-answer { display: block; margin-top: 8px; color: var(--muted); font-size: 16px; font-weight: 500; line-height: 1.58; }
+.article-faq-question-only { margin-bottom: 0; padding-bottom: 7px; border-radius: 0 12px 0 0; }
+.article-faq-question-only .article-faq-question { margin-bottom: 0; }
+.article-faq-answer-only { margin: 0; padding: 0 18px 17px; border-left: 3px solid var(--red); border-radius: 0 0 12px 0; background: rgba(164,225,243,.24); color: var(--muted); font-size: 16px; font-weight: 500; line-height: 1.58; }
 footer { border-top: 1px solid var(--line); padding: 28px 24px 60px; color: var(--muted); }
 .footer-inner { max-width: var(--max); margin: 0 auto; font-size: 13px; }
 @media (max-width: 900px) {
@@ -201,6 +207,10 @@ footer { border-top: 1px solid var(--line); padding: 28px 24px 60px; color: var(
   .checklist-grid, .article-form-grid, .article-messenger-fields { grid-template-columns: 1fr; }
   .article-lead { padding: 22px 18px; border-radius: 13px; }
   .article-lead-form .btn { width: 100%; }
+  .article-faq-entry { padding: 15px 16px; }
+  .article-faq-question { font-size: 17px; }
+  .article-faq-answer, .article-faq-answer-only { font-size: 15px; }
+  .article-faq-answer-only { padding: 0 16px 15px; }
   .data-table { font-size: 13px; }
   .data-table th, .data-table td { padding: 11px 12px; }
   .card-image { height: 150px; }
