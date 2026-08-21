@@ -62,7 +62,53 @@
     });
   }
 
+  function prepareTableScrollHints() {
+    document.querySelectorAll('.data-table-wrap').forEach((wrap) => {
+      if (wrap.querySelector('.table-scroll-hint')) return;
+
+      wrap.setAttribute('role', 'region');
+      wrap.setAttribute('aria-label', 'Таблица: листайте влево и вправо');
+      wrap.setAttribute('tabindex', '0');
+
+      const hint = document.createElement('p');
+      hint.className = 'table-scroll-hint';
+      hint.innerHTML = '<span aria-hidden="true">↔</span><span>Листайте таблицу влево и вправо</span>';
+      wrap.prepend(hint);
+    });
+  }
+
+  function prepareMobileToc() {
+    document.querySelectorAll('.toc').forEach((toc, index) => {
+      if (toc.querySelector('.toc-toggle')) return;
+
+      const label = toc.querySelector('strong')?.textContent.trim() || 'Содержание';
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'toc-toggle';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.innerHTML = `<span>${label} статьи</span><span class="toc-toggle-icon" aria-hidden="true">+</span>`;
+
+      toc.classList.add('toc--collapsible');
+      toc.id ||= `article-toc-${index + 1}`;
+      toc.insertBefore(toggle, toc.firstChild);
+
+      toggle.addEventListener('click', () => {
+        const isOpen = toc.classList.toggle('is-open');
+        toggle.setAttribute('aria-expanded', String(isOpen));
+        toggle.querySelector('.toc-toggle-icon').textContent = isOpen ? '−' : '+';
+      });
+
+      toc.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
+        toc.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.querySelector('.toc-toggle-icon').textContent = '+';
+      }));
+    });
+  }
+
   formatArticleFaq();
+  prepareTableScrollHints();
+  prepareMobileToc();
 
   document.querySelectorAll('.article-body').forEach((article, index) => {
     const articleTitle = article.closest('main')?.querySelector('h1')?.textContent.trim() || document.title;
