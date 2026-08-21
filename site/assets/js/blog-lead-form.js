@@ -23,6 +23,47 @@
     };
   }
 
+  function formatArticleFaq() {
+    document.querySelectorAll('.article-body h2, .article-body h3').forEach((heading) => {
+      if (!/^Частые вопросы(?:\s|$)/i.test(heading.textContent.trim())) return;
+
+      let node = heading.nextElementSibling;
+      while (node && !/^H[1-6]$/.test(node.tagName)) {
+        if (node.tagName === 'P' && !node.classList.contains('article-faq-answer-only')) {
+          const text = node.textContent.trim();
+          const questionEnd = text.indexOf('?');
+
+          if (questionEnd !== -1) {
+            const questionText = text.slice(0, questionEnd + 1);
+            const answerText = text.slice(questionEnd + 1).trim();
+            const question = document.createElement('strong');
+            question.className = 'article-faq-question';
+            question.textContent = questionText;
+
+            node.classList.add('article-faq-entry');
+            node.replaceChildren(question);
+
+            if (answerText) {
+              const answer = document.createElement('span');
+              answer.className = 'article-faq-answer';
+              answer.textContent = answerText;
+              node.append(answer);
+            } else {
+              node.classList.add('article-faq-question-only');
+              const answerParagraph = node.nextElementSibling;
+              if (answerParagraph?.tagName === 'P') {
+                answerParagraph.classList.add('article-faq-answer-only');
+              }
+            }
+          }
+        }
+        node = node.nextElementSibling;
+      }
+    });
+  }
+
+  formatArticleFaq();
+
   document.querySelectorAll('.article-body').forEach((article, index) => {
     const articleTitle = article.closest('main')?.querySelector('h1')?.textContent.trim() || document.title;
     const checklistArticle = articleTitle.includes('Переезд на Северный Кипр в 2026');
