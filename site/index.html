@@ -536,7 +536,7 @@
     @media (max-width: 1050px) {
       .urgent-card { grid-template-columns: 1fr; gap: 30px; }
       .nav { gap: 15px; }
-      .nav a:nth-child(3), .nav a:nth-child(4) { display: none; }
+      .nav > a:nth-child(3), .nav > a:nth-child(4) { display: none; }
       .audience-grid { grid-template-columns: repeat(2, 1fr); }
       .services-grid { grid-template-columns: repeat(2, 1fr); }
       .numbers { grid-template-columns: repeat(2, 1fr); }
@@ -617,7 +617,7 @@
       }
       .nav a::after { display: none; }
       .menu-open .nav { display: flex; }
-      .nav a:nth-child(3), .nav a:nth-child(4) { display: block; }
+      .nav > a:nth-child(3), .nav > a:nth-child(4) { display: block; }
       .nav-socials { margin: 4px 0 0; gap: 10px; }
       .nav-socials .social-link { width: 46px; height: 46px; }
       .nav-socials .social-link svg { width: 22px; height: 22px; }
