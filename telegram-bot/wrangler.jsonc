@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "zapasnoy-aerodrom-bot",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-26",
+  "workers_dev": true,
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "triggers": { "crons": ["* * * * *"] },
+  "vars": {
+    "BOT_USERNAME": "zapasnoy_aerodrom_bot",
+    "PROJECT_PREFIX": "ЗАПАСНОЙ АЭРОДРОМ",
+    "OWNER_USER_IDS": "",
+    "SUPPORT_REPLY_USER_IDS": "",
+    "CHANNEL_ID": "",
+    "CHANNEL_INVITE_URL": "",
+    "SUPPORT_CHAT_ID": "",
+    "CONSULTATION_URL": "https://zapasnoy-aerodrom.com",
+    "DEFAULT_TIME_OFFSET": "+03:00",
+    "DEFAULT_TIMEZONE_LABEL": "МСК"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zapasnoy-aerodrom-bot-db",
+      "database_id": "7919ff32-72a4-49cb-9d55-5f17c84d3aa0",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
