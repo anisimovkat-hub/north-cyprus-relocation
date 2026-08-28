@@ -252,6 +252,33 @@ h1 .accent {
   object-position: top;
 }
 
+.landing-compact .hero {
+  min-height: 520px;
+  padding: 38px 0 34px;
+}
+
+.landing-compact h1 {
+  font-size: clamp(52px, 5.25vw, 88px);
+}
+
+.landing-compact .lead {
+  margin-top: 21px;
+  font-size: 19px;
+}
+
+.landing-compact .meta-row {
+  margin-top: 19px;
+}
+
+.landing-compact .hero-actions {
+  margin-top: 23px;
+}
+
+.landing-compact .guide-cover-wrap {
+  width: min(100%, 330px);
+  max-height: 412px;
+}
+
 .section {
   padding: clamp(70px, 7vw, 118px) 0;
 }
@@ -644,6 +671,15 @@ h1 .accent {
 
   .hero {
     padding: 42px 0 38px;
+  }
+
+  .landing-compact .hero {
+    min-height: auto;
+    padding: 34px 0 32px;
+  }
+
+  .landing-compact h1 {
+    font-size: clamp(41px, 12.2vw, 56px);
   }
 
   h1 {
