@@ -5,6 +5,7 @@
   var guides = {
     '/guides/24-hours/': '24_hours',
     '/guides/team-relocation/': 'team_relocation',
+    '/guides/team-relocation-form/': 'team_relocation_form',
     '/guides/north-cyprus-residence/': 'vnzh',
     '/guides/company-abroad/': 'company_abroad',
     '/guides/country-choice/': 'country_choice'
