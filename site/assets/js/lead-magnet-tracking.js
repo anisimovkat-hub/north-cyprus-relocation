@@ -8,6 +8,7 @@
     '/guides/team-relocation-form/': 'team_relocation_form',
     '/guides/north-cyprus-residence/': 'vnzh',
     '/guides/company-abroad/': 'company_abroad',
+    '/guides/company-abroad-form/': 'company_abroad_form',
     '/guides/country-choice/': 'country_choice'
   };
 
