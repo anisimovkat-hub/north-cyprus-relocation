@@ -22,7 +22,7 @@
     return {
       ...values,
       messenger: values.phone || '',
-      source: 'Лид-магнит: релокация команды (форма)',
+      source: form.dataset.leadSource || 'Лид-магнит (форма)',
       page: window.location.href,
       utm_source: params.get('utm_source') || '',
       utm_medium: params.get('utm_medium') || '',
@@ -52,19 +52,22 @@
       });
 
       const goalParams = {
-        form_source: 'guide_team_relocation_form',
-        guide: 'team_relocation'
+        form_source: form.dataset.formSource || 'guide_form',
+        guide: form.dataset.guide || 'lead_magnet'
       };
       reachGoal('lead_form_sent', goalParams);
       reachGoal('any_form_sent', goalParams);
-      reachGoal('guide_team_relocation_form_sent', goalParams);
+      if (form.dataset.goal) reachGoal(form.dataset.goal, goalParams);
 
       form.hidden = true;
       access.hidden = false;
       access.focus();
     } catch (error) {
       if (status) {
-        status.innerHTML = 'Не удалось отправить форму. Попробуйте ещё раз или <a href="https://t.me/zapasnoyaero/119" target="_blank" rel="noopener noreferrer">заберите гайд в Telegram</a>.';
+        const fallbackUrl = form.dataset.fallbackUrl;
+        status.innerHTML = fallbackUrl
+          ? 'Не удалось отправить форму. Попробуйте ещё раз или <a href="' + fallbackUrl + '" target="_blank" rel="noopener noreferrer">заберите гайд в Telegram</a>.'
+          : 'Не удалось отправить форму. Проверьте соединение и попробуйте ещё раз.';
       }
     } finally {
       if (submit) {
