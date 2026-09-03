@@ -5,6 +5,7 @@ import { isGuideKey, keyboard } from './utils.js';
 const PERIODS = { a: 'Всё время', t: 'Сегодня', w: '7 дней', m: '30 дней' };
 const RESERVED = new Set(['unknown_history', 'untagged']);
 const PAGE_SIZE = 5;
+const SHARED_VIEWS = new Set(['overview', 'private', 'guides', 'sources', 'guide', 'links', 'linkguide']);
 export function sourceKeyValid(key) { return /^[a-z][a-z0-9_]{0,23}$/.test(key) && !RESERVED.has(key); }
 export function trackedPayload(guide, source) {
   const payload = `${guide}--s-${source}`;
@@ -44,10 +45,19 @@ export async function recordStart(env, message, { guideKey, sourceKey }) {
 
 export function isStatsLocation(config, message) {
   if (message?.chat?.type === 'private') return true;
-  return Boolean(config.statsChatId && String(message?.chat?.id) === String(config.statsChatId)
-    && (!config.statsTopicId || Number(message.message_thread_id) === Number(config.statsTopicId)));
+  return isSharedStatsLocation(config, message);
+}
+export function isSharedStatsLocation(config, message) {
+  return Boolean(message?.chat?.type === 'supergroup' && config.statsChatId && config.statsTopicId
+    && String(message.chat.id) === String(config.statsChatId)
+    && Number(message.message_thread_id) === Number(config.statsTopicId));
 }
 function owner(config, userId) { return config.owners.has(String(userId)); }
+function canViewStats(config, userId, data, message) {
+  if (!userId) return false;
+  if (isSharedStatsLocation(config, message)) return SHARED_VIEWS.has(data.split(':')[1] || 'overview');
+  return owner(config, userId) && (!message || (message.chat?.type === 'private' && String(message.chat.id) === String(userId)));
+}
 function button(text, data) { return { text, callback_data: data }; }
 function navigation(view, period, guide = '') {
   return [
@@ -62,13 +72,14 @@ function pagination(rows, view, period, page, total, guide = '') {
   if ((page+1)*PAGE_SIZE < total) buttons.push(button('Далее →', `st:${view}:${period}:${page+1}${guide?':'+guide:''}`));
   if (buttons.length) rows.push(buttons);
 }
-async function deliverView(env, userId, text, rows, callback) {
-  const payload = { chat_id:userId, text, reply_markup:keyboard(rows), link_preview_options:{is_disabled:true} };
-  if (callback?.message?.chat?.type === 'private' && String(callback.message.chat.id) === String(userId)) {
+async function deliverView(env, userId, text, rows, callback, context) {
+  // The caller has authorized this exact chat/topic. Group navigation edits the shared report.
+  const payload = { chat_id:context?.chat.id ?? userId, text, reply_markup:keyboard(rows), link_preview_options:{is_disabled:true} };
+  if (callback?.message) {
     try { return await telegram(env,'editMessageText',{...payload,message_id:callback.message.message_id}); }
     catch (error) { if (/message is not modified/i.test(String(error))) return; throw error; }
   }
-  return telegram(env,'sendMessage',payload);
+  return telegram(env,'sendMessage',{...payload,...(context?.message_thread_id ? {message_thread_id:context.message_thread_id} : {})});
 }
 export async function overviewData(env, since) {
   return dbFirst(env, `SELECT
@@ -82,8 +93,10 @@ export async function overviewData(env, since) {
     (SELECT setting_value FROM settings WHERE setting_key='analytics_started_at') tracking_since`,
   Array(6).fill(since));
 }
-export async function showStats(env, config, userId, data='st:overview:a', callback=null) {
-  if (!owner(config,userId)) return;
+export async function showStats(env, config, userId, data='st:overview:a', callback=null, contextMessage=null) {
+  const context = callback?.message || contextMessage;
+  if (!canViewStats(config,userId,data,context)) return;
+  const shared = isSharedStatsLocation(config,context);
   const [,rawView,rawPeriod,rawPage,guide=''] = data.split(':');
   const view = rawView || 'overview';
   const period = PERIODS[rawPeriod] ? rawPeriod : 'a';
@@ -128,7 +141,7 @@ export async function showStats(env, config, userId, data='st:overview:a', callb
     text = '🔗 Ссылки с учётом источника\n\nВыберите гайд. Для каждой площадки используйте отдельную ссылку прямо на бота. Проверка подписки и выдача PDF сохраняются.\n\nОбычная ссылка на пост канала не сохраняет источник лендинга. Существующие лендинги автоматически не менялись.';
     rows = [[button('📊 Статистика','st:overview:a')]];
     for (const g of guides.results) rows.push([button(g.title.slice(0,55),`st:linkguide:a:0:${g.guide_key}`)]);
-    rows.push([button('➕ Новый источник','st:addsource')]);
+    if (!shared) rows.push([button('➕ Новый источник','st:addsource')]);
     pagination(rows,'links','a',page,total.n);
   } else if (view === 'linkguide') {
     if (!isGuideKey(guide)) return;
@@ -137,7 +150,8 @@ export async function showStats(env, config, userId, data='st:overview:a', callb
     const sources = await dbAll(env,"SELECT source_key,title FROM traffic_sources WHERE source_key NOT IN ('untagged','unknown_history') ORDER BY source_key LIMIT ? OFFSET ?",[PAGE_SIZE,page*PAGE_SIZE]);
     const total = await dbFirst(env,"SELECT COUNT(*) n FROM traffic_sources WHERE source_key NOT IN ('untagged','unknown_history')");
     text = `🔗 ${g.title}\n\n` + sources.results.map(s=>`${s.title}\nhttps://t.me/${config.botUsername}?start=${trackedPayload(guide,s.source_key)}`).join('\n\n') + '\n\nПоставьте нужную ссылку на соответствующую площадку. Источник записывается после нажатия Start, а не при просмотре ссылки.';
-    rows = [[button('← Выбор гайда','st:links:a:0'),button('➕ Источник','st:addsource')]];
+    rows = [[button('← Выбор гайда','st:links:a:0')]];
+    if (!shared) rows[0].push(button('➕ Источник','st:addsource'));
     pagination(rows,'linkguide','a',page,total.n,guide);
   } else if (view === 'addsource') {
     await dbRun(env,`INSERT INTO pending_actions(chat_id,user_id,action,expires_at) VALUES(?,?,'stats_source',datetime('now','+30 minutes'))
@@ -145,7 +159,12 @@ export async function showStats(env, config, userId, data='st:overview:a', callb
     text = 'Пришлите источник одной строкой:\nyandex_team | Яндекс: команда\n\nКлюч: латинская буква, затем буквы, цифры или _, до 24 символов. Название: до 60 символов. Для разных кампаний создавайте разные ключи. /cancel — отмена.';
     rows = [[button('← К ссылкам','st:links:a:0')]];
   } else return;
-  return deliverView(env,userId,text,rows,callback);
+  if (shared) {
+    const updated = new Date().toLocaleString('ru-RU',{timeZone:'Europe/Moscow'});
+    text += `\n\nОбщее меню: видно всем участникам группы.\nОбновлено: ${updated} МСК. Для новых цифр нажмите «Обновить».`;
+    rows.push([button('🔄 Обновить',`st:${view}:${period}:${page}${guide?':'+guide:''}`)]);
+  }
+  return deliverView(env,userId,text,rows,callback,context);
 }
 export async function captureSource(env,config,message) {
   if (message.chat.type!=='private' || !owner(config,message.from?.id) || !message.text || message.text.startsWith('/')) return false;
@@ -169,19 +188,14 @@ export async function captureSource(env,config,message) {
   return true;
 }
 export async function statsCommand(env,config,message) {
-  if (!owner(config,message.from?.id) || message.sender_chat || !isStatsLocation(config,message)) return;
-  if (message.chat.type==='private') return showStats(env,config,message.from.id);
-  return telegram(env,'sendMessage',{
-    chat_id:message.chat.id, message_thread_id:message.message_thread_id,
-    text:'📊 Меню статистики «Запасной аэродром»\n\nОбзор, выдачи гайдов и источники. Полный отчёт доступен только владельцам и открывается в личном чате бота.',
-    reply_markup:keyboard([[button('📊 Открыть мою статистику','st:private:a')]]),
-  });
+  if (message.from?.is_bot || message.sender_chat || !isStatsLocation(config,message)) return;
+  return showStats(env,config,message.from?.id,'st:overview:a',null,message);
 }
 export async function statsCallback(env,config,callback) {
-  if (!owner(config,callback.from?.id) || callback.from?.is_bot || !isStatsLocation(config,callback.message)) {
-    await telegram(env,'answerCallbackQuery',{callback_query_id:callback.id,text:'Статистика доступна только владельцам в личном чате или в меню статистики.',show_alert:true}).catch(()=>{});
+  if (callback.from?.is_bot || !callback.message || !canViewStats(config,callback.from?.id,callback.data,callback.message)) {
+    await telegram(env,'answerCallbackQuery',{callback_query_id:callback.id,text:'Просмотр доступен в теме статистики всем участникам. Личное меню и изменения — только владельцам в личном чате.',show_alert:true}).catch(()=>{});
     return;
   }
-  await telegram(env,'answerCallbackQuery',{callback_query_id:callback.id,text:callback.message.chat.type==='private'?'':'Отправляю статистику в личный чат'}).catch(()=>{});
+  await telegram(env,'answerCallbackQuery',{callback_query_id:callback.id}).catch(()=>{});
   return showStats(env,config,callback.from.id,callback.data,callback);
 }

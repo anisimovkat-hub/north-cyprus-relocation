@@ -106,19 +106,84 @@ test('owner menu is private, not counted as activation, denies nonowners and for
   await webhook(env,{update_id:202,message:message(22,2,'/stats')});
   assert.match(tg.sent.at(-1).payload.text,/только владельцам/);
 });
-test('group launcher contains no figures; callback sends full report only to owner DM',async(t)=>{
+test('group stats show figures in the topic; every participant edits the same shared report',async(t)=>{
   const {env,config}=setup();const tg=mockTelegram(t);
   const group={...message(),chat:{id:-10099,type:'supergroup'},message_thread_id:5};
   await statsCommand(env,config,group);
   assert.equal(tg.sent.at(-1).payload.chat_id,-10099);
-  assert.doesNotMatch(tg.sent.at(-1).payload.text,/Новых активаций/);
+  assert.equal(tg.sent.at(-1).payload.message_thread_id,5);
+  assert.match(tg.sent.at(-1).payload.text,/Новых активаций/);
   await statsCallback(env,config,{id:'one',from:{id:1},message:group,data:'st:private:a'});
-  assert.equal(tg.sent.at(-1).payload.chat_id,1);
+  assert.equal(tg.sent.at(-1).payload.chat_id,-10099);
+  assert.equal(tg.sent.at(-1).method,'editMessageText');
+  assert.equal(tg.sent.at(-1).payload.message_id,group.message_id);
   assert.match(tg.sent.at(-1).payload.text,/Новых активаций/);
   await statsCallback(env,config,{id:'two',from:{id:2},message:group,data:'st:sources:a:0'});
-  assert.equal(tg.sent.at(-1).method,'answerCallbackQuery');
+  assert.equal(tg.sent.at(-1).method,'editMessageText');
+  assert.equal(tg.sent.at(-1).payload.chat_id,-10099);
+  assert.match(tg.sent.at(-1).payload.text,/Источники/);
+  assert.ok(tg.sent.at(-1).payload.reply_markup.inline_keyboard.flat().some(b=>b.callback_data==='st:sources:a:0' && b.text.includes('Обновить')));
   await statsCallback(env,config,{id:'three',from:{id:1},message:{...group,message_thread_id:77},data:'st:overview:a'});
   assert.equal(tg.sent.at(-1).payload.show_alert,true);
+});
+test('shared views are read-only even for owners; unknown groups/topics and private nonowners fail closed',async(t)=>{
+  const {env,config,sql}=setup();const tg=mockTelegram(t);
+  const group={...message(),chat:{id:-10099,type:'supergroup'},message_thread_id:5};
+  for (const user of [1,2]) {
+    for (const data of ['st:overview:a','st:guides:w:0','st:sources:t:0','st:guide:m:0:guide_team','st:links:a:0','st:linkguide:a:0:guide_team']) {
+      await statsCallback(env,config,{id:'read',from:{id:user},message:group,data});
+      const p=tg.sent.at(-1).payload;
+      assert.equal(tg.sent.at(-1).method,'editMessageText');
+      assert.equal(p.chat_id,-10099);
+      assert.ok(p.text.length<4096);
+      for(const b of p.reply_markup.inline_keyboard.flat()) {
+        assert.notEqual(b.callback_data,'st:addsource');
+        assert.ok(Buffer.byteLength(b.callback_data)<=64);
+      }
+    }
+    await statsCallback(env,config,{id:'write',from:{id:user},message:group,data:'st:addsource'});
+    assert.equal(tg.sent.at(-1).payload.show_alert,true);
+    const before=tg.sent.length;
+    await showStats(env,config,user,'st:addsource',{message:group});
+    assert.equal(tg.sent.length,before);
+    for (const location of [{...group,message_thread_id:77},{...group,chat:{id:-10088,type:'supergroup'}}, {...group,chat:{id:-10099,type:'channel'}}]) {
+      await statsCallback(env,config,{id:'bad-place',from:{id:user},message:location,data:'st:overview:a'});
+      assert.equal(tg.sent.at(-1).payload.show_alert,true);
+    }
+  }
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM pending_actions').get().n,0);
+  await statsCallback(env,config,{id:'dm',from:{id:2},message:message(50,2),data:'st:overview:a'});
+  assert.equal(tg.sent.at(-1).payload.show_alert,true);
+  await statsCallback(env,{...config,statsTopicId:''},{id:'unset',from:{id:1},message:group,data:'st:overview:a'});
+  assert.equal(tg.sent.at(-1).payload.show_alert,true);
+});
+test('webhook allows nonowner stats only in configured topic and never grants administrative actions',async(t)=>{
+  const {env,sql}=setup();const tg=mockTelegram(t);
+  sql.exec("INSERT INTO settings(setting_key,setting_value) VALUES('stats_chat_id','-10099'),('stats_topic_id','5');");
+  const group={...message(80,2,'/stats'),chat:{id:-10099,type:'supergroup'},message_thread_id:5};
+  await webhook(env,{update_id:300,message:group});
+  assert.equal(tg.sent.at(-1).payload.chat_id,-10099);
+  assert.equal(tg.sent.at(-1).payload.message_thread_id,5);
+  assert.match(tg.sent.at(-1).payload.text,/Новых активаций/);
+  const before=tg.sent.length;
+  await webhook(env,{update_id:301,message:{...group,message_id:81,message_thread_id:6}});
+  assert.equal(tg.sent.length,before);
+  let id=302;
+  for(const user of [1,2])for(const data of ['admin:settings','admin:guide','admin:broadcast','admin:publish:guide_team','pub:go:guide_team','bcast:go:1','st:addsource']) {
+    await webhook(env,{update_id:id++,callback_query:{id:String(id),from:{id:user},message:group,data}});
+    assert.equal(tg.sent.at(-1).method,'answerCallbackQuery');
+    assert.equal(tg.sent.at(-1).payload.show_alert,true);
+  }
+  await webhook(env,{update_id:id++,callback_query:{id:'allowed',from:{id:2},message:group,data:'st:guides:a:0'}});
+  assert.equal(tg.sent.at(-1).method,'editMessageText');
+  assert.equal(tg.sent.at(-1).payload.chat_id,-10099);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM pending_actions').get().n,0);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM broadcasts').get().n,0);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM published_posts').get().n,0);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM bot_starts').get().n,0);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM bot_start_events').get().n,0);
+  assert.equal(sql.prepare("SELECT COUNT(*) n FROM incoming_updates WHERE status!='done'").get().n,0);
+  assert.ok(tg.sent.every(x=>x.payload.chat_id===undefined || x.payload.chat_id===-10099));
 });
 test('all views render within Telegram limits, pagination and source creation work',async(t)=>{
   const {env,config,sql}=setup(true);const tg=mockTelegram(t);

@@ -1,5 +1,5 @@
 import { dbAll, dbBatch, dbFirst, dbRun } from "./db.js";
-import { captureSource, isStatsLocation, recordStart, resolveStart, statsCallback, statsCommand, trackedPayload } from "./analytics.js";
+import { captureSource, isSharedStatsLocation, isStatsLocation, recordStart, resolveStart, statsCallback, statsCommand, trackedPayload } from "./analytics.js";
 import { guideButtonText, welcomeText } from "./messages.js";
 import { isBlockedError, telegram } from "./telegram.js";
 import {
@@ -821,7 +821,7 @@ async function handleMessage(env, message) {
   if (message.chat.type === "private") await ensureUser(env, message.from);
 
   if (['/stats','/menu'].includes(command) || (command === '/start' && commandArg(message.text) === 'stats')) {
-    if (!isOwner(config,message.from?.id)) {
+    if (!isOwner(config,message.from?.id) && !isSharedStatsLocation(config,message)) {
       if (isStatsLocation(config,message)) await telegram(env,'sendMessage',{chat_id:message.chat.id,message_thread_id:message.message_thread_id,text:'Статистика доступна только владельцам.'});
       return;
     }
@@ -1185,7 +1185,7 @@ export default {
           support_forum: Boolean(config.supportChatId),
           support_reply_ids: config.supportReplyIds.size > 0,
           statistics: true,
-          statistics_group: Boolean(config.statsChatId),
+          statistics_group: Boolean(config.statsChatId && config.statsTopicId),
         },
       });
     }
