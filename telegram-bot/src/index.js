@@ -1,4 +1,6 @@
 import { dbAll, dbBatch, dbFirst, dbRun } from "./db.js";
+import { captureSource, isStatsLocation, recordStart, resolveStart, statsCallback, statsCommand, trackedPayload } from "./analytics.js";
+import { guideButtonText, welcomeText } from "./messages.js";
 import { isBlockedError, telegram } from "./telegram.js";
 import {
   compactError,
@@ -51,6 +53,8 @@ async function loadConfig(env) {
     channelId: settings.channel_id || env.CHANNEL_ID || "",
     channelInviteUrl: settings.channel_invite_url || env.CHANNEL_INVITE_URL || "",
     supportChatId: settings.support_chat_id || env.SUPPORT_CHAT_ID || "",
+    statsChatId: settings.stats_chat_id || "",
+    statsTopicId: settings.stats_topic_id || "",
     consultationUrl: settings.consultation_url || env.CONSULTATION_URL || "https://zapasnoy-aerodrom.com",
     projectPrefix: settings.project_prefix || env.PROJECT_PREFIX || "ЗАПАСНОЙ АЭРОДРОМ",
     defaultTimeOffset: env.DEFAULT_TIME_OFFSET || "+03:00",
@@ -206,8 +210,8 @@ async function deliveryCount(env, guideKey) {
 
 function guideButton(config, guideKey, count) {
   return {
-    text: `🎁 Забрать гайд · ${count}`,
-    url: `https://t.me/${config.botUsername}?start=${guideKey}`,
+    text: guideButtonText(count),
+    url: `https://t.me/${config.botUsername}?start=${trackedPayload(guideKey, 'channel')}`,
   };
 }
 
@@ -439,47 +443,6 @@ async function publishGuide(env, config, guide, scheduledPostId = null) {
   return message;
 }
 
-async function sendStats(env, chatId) {
-  const [users, overall, perGuide] = await Promise.all([
-    dbFirst(env, "SELECT COUNT(*) AS total, SUM(active = 1) AS active FROM users"),
-    dbFirst(
-      env,
-      `SELECT
-         (SELECT COUNT(DISTINCT user_id) FROM activations) AS activated_users,
-         (SELECT COUNT(*) FROM activations) AS activations,
-         (SELECT COUNT(DISTINCT user_id) FROM deliveries WHERE status = 'sent') AS unique_recipients,
-         (SELECT COUNT(*) FROM deliveries WHERE status = 'sent') AS deliveries`,
-    ),
-    dbAll(
-      env,
-      `SELECT g.guide_key, g.title,
-         COUNT(DISTINCT a.user_id) AS activations,
-         COUNT(DISTINCT CASE WHEN d.status = 'sent' THEN d.user_id END) AS deliveries
-       FROM guides g
-       LEFT JOIN activations a ON a.guide_key = g.guide_key
-       LEFT JOIN deliveries d ON d.guide_key = g.guide_key AND d.user_id = a.user_id
-       GROUP BY g.guide_key, g.title
-       ORDER BY g.title`,
-    ),
-  ]);
-  const lines = [
-    "📊 Статистика",
-    "",
-    `Уникально активировали: ${Number(overall?.activated_users || 0)}`,
-    `Всего уникальных активаций гайд × пользователь: ${Number(overall?.activations || 0)}`,
-    `Уникальных получателей всех гайдов: ${Number(overall?.unique_recipients || 0)}`,
-    `Всего выдач: ${Number(overall?.deliveries || 0)}`,
-    `Пользователей в базе: ${Number(users?.total || 0)} (активных: ${Number(users?.active || 0)})`,
-    "",
-    "По гайдам:",
-  ];
-  if (!perGuide.results.length) lines.push("— гайды ещё не добавлены");
-  for (const row of perGuide.results) {
-    lines.push(`• ${row.title} [${row.guide_key}]: активаций ${Number(row.activations || 0)}, выдач ${Number(row.deliveries || 0)}`);
-  }
-  await telegram(env, "sendMessage", { chat_id: chatId, text: lines.join("\n") });
-}
-
 async function adminMenu(env, config, chatId) {
   const guides = await listGuides(env);
   const rows = [[{ text: "📊 Полная статистика", callback_data: "admin:stats" }]];
@@ -705,7 +668,7 @@ async function handleOwnerCommand(env, config, message, command) {
     return true;
   }
   if (command === "/stats") {
-    await sendStats(env, chatId);
+    await statsCommand(env, config, message);
     return true;
   }
   if (command === "/cancel") {
@@ -820,9 +783,16 @@ async function relayFromTeam(env, config, message) {
 }
 
 async function handleStart(env, config, message) {
-  const guideKey = message.text.trim().split(/\s+/, 2)[1];
-  if (!isGuideKey(guideKey)) {
-    await telegram(env, "sendMessage", { chat_id: message.chat.id, text: "Откройте ссылку на нужный гайд в нашем канале." });
+  const raw = message.text.trim().split(/\s+/, 2)[1] || '';
+  const attribution = await resolveStart(env, raw);
+  await recordStart(env, message, attribution);
+  const guideKey = attribution.guideKey;
+  if (!guideKey) {
+    const rows = [];
+    if (config.channelInviteUrl) rows.push([{ text: 'Перейти в канал', url: config.channelInviteUrl }]);
+    if (config.consultationUrl) rows.push([{ text: 'Узнать о переезде', url: config.consultationUrl }]);
+    if (isOwner(config, message.from.id)) rows.push([{text:'📊 Статистика бота',callback_data:'st:overview:a'}]);
+    await telegram(env, "sendMessage", { chat_id: message.chat.id, text: raw ? 'Этот гайд пока недоступен. Откройте актуальную ссылку из канала.' : welcomeText(), reply_markup:keyboard(rows) });
     return;
   }
   const guide = await getGuide(env, guideKey);
@@ -845,8 +815,18 @@ async function handleStart(env, config, message) {
 
 async function handleMessage(env, message) {
   const config = await loadConfig(env);
+  const addressedBot = (message.text || '').trim().match(/^\/\w+@([A-Za-z0-9_]+)/)?.[1];
+  if (addressedBot && addressedBot.toLowerCase() !== config.botUsername.toLowerCase()) return;
   const command = commandFrom(message.text || "");
   if (message.chat.type === "private") await ensureUser(env, message.from);
+
+  if (['/stats','/menu'].includes(command) || (command === '/start' && commandArg(message.text) === 'stats')) {
+    if (!isOwner(config,message.from?.id)) {
+      if (isStatsLocation(config,message)) await telegram(env,'sendMessage',{chat_id:message.chat.id,message_thread_id:message.message_thread_id,text:'Статистика доступна только владельцам.'});
+      return;
+    }
+    return statsCommand(env,config,message);
+  }
 
   if (command === "/chatid") {
     const replied = message.reply_to_message;
@@ -864,10 +844,11 @@ async function handleMessage(env, message) {
     return;
   }
 
-  if (isOwner(config, message.from?.id)) {
+  if (isOwner(config, message.from?.id) && message.chat.type === 'private') {
     if (await handleOwnerCommand(env, config, message, command)) return;
+    if (await captureSource(env,config,message)) return;
     if (await capturePending(env, config, message)) return;
-  } else if (["/admin", "/menu", "/stats", "/broadcast"].includes(command)) {
+  } else if (message.chat.type === 'private' && ["/admin", "/menu", "/stats", "/broadcast"].includes(command)) {
     await telegram(env, "sendMessage", { chat_id: message.chat.id, text: "Эта функция доступна только владельцам из OWNER_USER_IDS." });
     return;
   }
@@ -939,8 +920,10 @@ async function handleCallback(env, callback) {
   const config = await loadConfig(env);
   const data = callback.data || "";
   const chatId = callback.message?.chat?.id;
+  if (data.startsWith('st:') || data === 'admin:stats') return statsCallback(env,config,{...callback,data:data==='admin:stats'?'st:overview:a':data});
 
   if (data.startsWith("check:")) {
+    if (callback.message?.chat?.type !== 'private' || String(chatId) !== String(callback.from.id)) return;
     await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id }).catch(() => {});
     await ensureUser(env, callback.from);
     const guideKey = data.slice("check:".length);
@@ -954,13 +937,12 @@ async function handleCallback(env, callback) {
     return;
   }
 
-  if (!isOwner(config, callback.from.id)) {
+  if (!isOwner(config, callback.from.id) || callback.message?.chat?.type !== 'private') {
     await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "Нет прав владельца", show_alert: true }).catch(() => {});
     return;
   }
   await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id }).catch(() => {});
 
-  if (data === "admin:stats") return sendStats(env, chatId);
   if (data === "admin:settings") return showSettings(env, config, chatId);
   if (data === "admin:guide") {
     await setPending(env, chatId, callback.from.id, "guide_json");
@@ -1096,7 +1078,7 @@ async function processBroadcasts(env, limit = 15) {
       await dbRun(
         env,
         `UPDATE broadcast_recipients
-         SET status = 'sent', sent_at = CURRENT_TIMESTAMP, last_error = NULL
+         SET status = 'sent', sent_at = CURRENT_TIMESTAMP, last_error = NULL,
              updated_at = CURRENT_TIMESTAMP
          WHERE broadcast_id = ? AND user_id = ? AND status = 'processing'`,
         [broadcast.id, recipient.user_id],
@@ -1202,6 +1184,8 @@ export default {
           channel: Boolean(config.channelId && config.channelInviteUrl),
           support_forum: Boolean(config.supportChatId),
           support_reply_ids: config.supportReplyIds.size > 0,
+          statistics: true,
+          statistics_group: Boolean(config.statsChatId),
         },
       });
     }
