@@ -86,6 +86,54 @@
   box-shadow: 0 0 0 3px rgba(227, 45, 50, 0.12);
 }
 
+.guide-form-field .iti {
+  width: 100%;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.guide-form-field .iti__tel-input {
+  padding-left: 108px !important;
+}
+
+.guide-form-field .iti__selected-country-primary {
+  border-radius: 13px 0 0 13px;
+}
+
+.guide-form-field .iti__country-selector {
+  z-index: 30;
+  width: min(360px, calc(100vw - 48px));
+  border: 1px solid rgba(12, 12, 12, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 18px 42px rgba(12, 12, 12, 0.18);
+}
+
+.guide-form-field .iti__search-input {
+  min-height: 44px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border: 0;
+  border-radius: 14px 14px 0 0;
+  background: #fff;
+}
+
+.guide-form-field .iti__country {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.guide-form-hint {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.guide-form-field input[aria-invalid="true"] {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(227, 45, 50, 0.12);
+}
+
 .guide-form-consent {
   grid-column: 1 / -1;
   display: flex;

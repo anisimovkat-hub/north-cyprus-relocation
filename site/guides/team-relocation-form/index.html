@@ -9,10 +9,12 @@
   <link rel="canonical" href="https://zapasnoy-aerodrom.com/guides/team-relocation-form/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/css/lead-magnet.css?v=20260827-1">
-  <link rel="stylesheet" href="/assets/css/lead-magnet-form.css?v=20260831-1">
+  <link rel="stylesheet" href="/assets/vendor/intl-tel-input/css/intlTelInput.min.css?v=29.2.3">
+  <link rel="stylesheet" href="/assets/css/lead-magnet-form.css?v=20260907-1">
   <script src="/assets/js/metrika.js"></script>
   <script src="/assets/js/lead-magnet-tracking.js?v=20260828-1" defer></script>
-  <script src="/assets/js/lead-magnet-form.js?v=20260831-1" defer></script>
+  <script src="/assets/vendor/intl-tel-input/js/intlTelInput.min.js?v=29.2.3" defer></script>
+  <script src="/assets/js/lead-magnet-form.js?v=20260907-1" defer></script>
 </head>
 <body class="landing-form">
   <header class="site-header">
@@ -39,16 +41,18 @@
             <div class="guide-lead-intro">
               <span class="guide-lead-label">Бесплатный доступ</span>
               <h2>Получите гайд сразу после отправки формы</h2>
-              <p>Оставьте имя и удобный контакт. На следующем экране откроются ссылки на PDF и Telegram.</p>
+              <p>Оставьте имя и номер телефона. На следующем экране откроются ссылки на PDF и Telegram.</p>
             </div>
             <form class="guide-lead-form" data-guide-lead-form data-lead-source="Лид-магнит: релокация команды (форма)" data-form-source="guide_team_relocation_form" data-guide="team_relocation" data-goal="guide_team_relocation_form_sent" data-fallback-url="https://t.me/zapasnoyaero/119">
               <input type="hidden" name="lead_type" value="Гайд: релокация команды">
               <label class="guide-form-field" for="guide-name">Имя
                 <input id="guide-name" name="name" type="text" placeholder="Как к вам обращаться" autocomplete="name" required>
               </label>
-              <label class="guide-form-field" for="guide-contact">Телефон или Telegram
-                <input id="guide-contact" name="phone" type="text" placeholder="+7 999 000-00-00 или @username" autocomplete="tel" required>
-              </label>
+              <div class="guide-form-field guide-form-field--phone">
+                <label for="guide-contact">Телефон</label>
+                <input id="guide-contact" name="phone" type="tel" inputmode="tel" autocomplete="tel" data-phone-input aria-describedby="guide-phone-hint" required>
+                <span class="guide-form-hint" id="guide-phone-hint">Выберите страну и введите полный номер.</span>
+              </div>
               <label class="guide-form-consent">
                 <input name="consent" type="checkbox" required>
                 <span>Согласен на обработку данных согласно <a href="/privacy/" target="_blank">политике конфиденциальности</a></span>
