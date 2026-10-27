@@ -113,8 +113,8 @@
   document.querySelectorAll('.article-body').forEach((article, index) => {
     const articleTitle = article.closest('main')?.querySelector('h1')?.textContent.trim() || document.title;
     const checklistArticle = articleTitle.includes('Переезд на Северный Кипр в 2026');
-    const heading = checklistArticle ? 'Получите полный чек-лист документов' : 'Обсудить ваш сценарий переезда';
-    const description = checklistArticle
+    const heading = article.dataset.leadHeading ? article.dataset.leadHeading : checklistArticle ? 'Получите полный чек-лист документов' : 'Обсудить ваш сценарий переезда';
+    const description = article.dataset.leadDescription ? article.dataset.leadDescription : checklistArticle
       ? 'Оставьте контакты — пришлём полную версию чек-листа со сроками годности документов и подскажем порядок первых шагов.'
       : 'Оставьте контакты — подскажем, какие шаги и документы важны именно в вашей ситуации.';
     const buttonLabel = checklistArticle ? 'Получить чек-лист и консультацию' : 'Получить консультацию';
