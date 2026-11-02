@@ -1,0 +1,13 @@
+.guide-card { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 24px; align-items: center; margin: 36px 0; padding: 20px; border: 1px solid var(--ink); border-radius: 18px; background: var(--blue-soft); box-shadow: 0 18px 36px rgba(13, 13, 13, .10); }
+.guide-card__cover { display: block; overflow: hidden; border: 1px solid var(--ink); border-radius: 10px; background: var(--paper); box-shadow: 0 12px 24px rgba(13, 13, 13, .16); }
+.guide-card__cover img { display: block; width: 100%; height: auto; }
+.guide-card__eyebrow { display: block; color: var(--red); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.guide-card__title { margin: 6px 0 8px; font-family: 'Lack', 'Manrope', sans-serif; font-size: clamp(22px, 2.4vw, 28px); font-weight: 400; line-height: 1.12; }
+.guide-card__text { margin: 0 0 16px; color: var(--muted); font-size: 15px; }
+.article-body .guide-card a.btn { color: var(--bg); text-decoration: none; }
+.article-body .guide-card a.btn:hover { color: var(--bg); }
+@media (max-width: 560px) {
+  .guide-card { grid-template-columns: 1fr; gap: 16px; padding: 16px; border-radius: 13px; }
+  .guide-card__cover { max-width: 140px; }
+  .guide-card .btn { width: 100%; }
+}
