@@ -86,8 +86,8 @@ p { margin: 0 0 16px; }
 .lead { max-width: 780px; color: var(--muted); font-size: 19px; }
 .meta { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 0; color: var(--muted); font-size: 14px; }
 .chip { border: 1px solid var(--ink); border-radius: 999px; padding: 7px 11px; background: var(--blue-soft); }
-.article-hero { width: 100%; height: 280px; margin: 30px 0 4px; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--blue-soft); box-shadow: 0 22px 44px rgba(13, 13, 13, .10); }
-.article-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.article-hero { width: 100%; height: auto; aspect-ratio: 16/9; margin: 30px 0 4px; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--blue-soft); box-shadow: 0 22px 44px rgba(13, 13, 13, .10); }
+.article-hero img { display: block; width: 100%; height: 100%; object-fit: contain; background: #f6f3ec; }
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 28px; }
 .card, .toc, .note, .cta, .faq-item {
   background: var(--paper);
@@ -98,10 +98,10 @@ p { margin: 0 0 16px; }
 }
 .card:nth-child(3n + 2) { background: var(--blue-soft); }
 .card:nth-child(3n) { background: var(--blue); }
-.card h2, .card h3 { margin-top: 0; }
+.card h2, .card h3 { margin-top: 0; font-size: 18px; }
 .card p { color: var(--muted); }
 .card-image { display: block; width: 100%; height: 164px; margin: -20px -20px 20px; width: calc(100% + 40px); border-radius: 9px 9px 0 0; overflow: hidden; background: var(--blue-soft); }
-.card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-image img { width: 100%; height: 100%; object-fit: contain; background: #f6f3ec; display: block; }
 .article { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 36px; align-items: start; margin-top: 38px; }
 .article-body { min-width: 0; width: 100%; }
 .article-body > h2:first-child { margin-top: 0; }
@@ -202,11 +202,12 @@ footer { border-top: 1px solid var(--line); padding: 28px 24px 60px; color: var(
   .toc { position: static; order: -1; width: 100%; }
 }
 @media (max-width: 560px) {
+  .card h2, .card h3 { font-size: 14px; }
   .nav { padding: 0 16px; gap: 10px; }
   .brand img { width: 122px; height: 50px; }
   .nav > .btn { min-height: 42px; padding: 0 13px; font-size: 12px; }
   main { padding: 38px 18px 64px; }
-  .article-hero { height: 210px; margin-top: 24px; border-radius: 13px; }
+  .article-hero { height: auto; margin-top: 24px; border-radius: 13px; }
   .article-photo { margin: 24px 0 28px; border-radius: 13px; }
   .article-photo img { height: 180px; }
   .document-checklist { margin: 30px 0; padding: 20px 16px; border-radius: 13px; }
